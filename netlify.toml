@@ -4,7 +4,7 @@
 
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["pdf-parse"]
+  external_node_modules = ["pdf-parse", "@napi-rs/canvas"]
 
 [[headers]]
   for = "/.netlify/functions/*"
