@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { PDFParse } from "pdf-parse";
+import { DOMMatrix, ImageData, Path2D } from "@napi-rs/canvas";
 import {
   assertSameOrigin,
   authenticateAdmin,
@@ -17,6 +17,12 @@ import {
   validatePublishedAt,
   validateSourceUrl
 } from "../shared/rag-utils.mjs";
+
+globalThis.DOMMatrix ??= DOMMatrix;
+globalThis.ImageData ??= ImageData;
+globalThis.Path2D ??= Path2D;
+
+const { PDFParse } = await import("pdf-parse");
 
 const BUCKET = "rag-documents";
 
