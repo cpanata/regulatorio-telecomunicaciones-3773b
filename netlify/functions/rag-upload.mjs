@@ -82,7 +82,8 @@ const handler = async (request) => {
         .replace(/[ \t]+/g, " ")
         .replace(/\n{3,}/g, "\n\n")
         .trim();
-    } catch {
+    } catch (error) {
+      console.error("PDF text extraction failed", error);
       throw new HttpError(422, "PDF_UNREADABLE", "No se pudo interpretar el PDF. Verifica que el archivo no esté dañado o protegido.");
     } finally {
       await parser.destroy();

@@ -5,6 +5,7 @@ import {
   chunkText,
   HttpError,
   MAX_CHUNKS,
+  MAX_EXTRACTED_CHARACTERS,
   parseJsonBody,
   validatePublishedAt,
   validateQuestion,
@@ -21,8 +22,15 @@ test("chunkText preserves text coverage and overlaps adjacent fragments", () => 
 });
 
 test("chunkText reports all fragments so uploads can reject over-limit files", () => {
-  const chunks = chunkText("texto ".repeat(20_000));
+  const chunks = chunkText("texto ".repeat(24_000));
   assert.ok(chunks.length > MAX_CHUNKS);
+});
+
+test("upload limits admit the 43-page ARCOTEL regulation PDF text volume", () => {
+  const text = "norma ".repeat(18_366);
+  const chunks = chunkText(text);
+  assert.ok(text.length <= MAX_EXTRACTED_CHARACTERS);
+  assert.ok(chunks.length <= MAX_CHUNKS);
 });
 
 test("validateQuestion trims and enforces length", () => {

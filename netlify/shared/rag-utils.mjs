@@ -2,8 +2,8 @@ import { createHmac } from "node:crypto";
 
 export const MAX_QUESTION_LENGTH = 1000;
 export const MAX_PDF_BYTES = 5 * 1024 * 1024;
-export const MAX_EXTRACTED_CHARACTERS = 80_000;
-export const MAX_CHUNKS = 60;
+export const MAX_EXTRACTED_CHARACTERS = 120_000;
+export const MAX_CHUNKS = 100;
 export const EMBEDDING_DIMENSIONS = 768;
 
 export class HttpError extends Error {
