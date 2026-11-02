@@ -1,0 +1,14 @@
+{
+  "name": "regulatorio-telecomunicaciones",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.3.0"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "pdf-parse": "2.4.5"
+  }
+}

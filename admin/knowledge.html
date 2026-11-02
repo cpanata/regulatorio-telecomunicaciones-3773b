@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0b172b">
+  <title>Documentos del asistente | Regulatorio Telecomunicaciones</title>
+  <style>
+    :root { color-scheme: light; font-family: "DM Sans", Arial, sans-serif; color: #102139; background: #f3f6f1; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header { padding: 22px max(20px, calc((100% - 900px) / 2)); background: #0b172b; color: #fff; }
+    header a { color: #b7f36b; font-size: .88rem; font-weight: 700; }
+    main { width: min(900px, calc(100% - 32px)); margin: 34px auto; }
+    h1 { margin: 0 0 8px; font: 800 clamp(1.7rem, 4vw, 2.4rem)/1.2 Arial, sans-serif; }
+    h2 { margin: 0 0 14px; font: 700 1.15rem Arial, sans-serif; }
+    p { line-height: 1.6; }
+    .card { margin: 18px 0; padding: clamp(18px, 4vw, 28px); border: 1px solid #dfe6dc; border-radius: 16px; background: #fff; box-shadow: 0 10px 26px rgb(16 33 57 / 5%); }
+    .notice { padding: 13px 15px; border-left: 4px solid #d99020; border-radius: 6px; background: #fff7e8; color: #664614; font-size: .9rem; }
+    label { display: grid; gap: 6px; margin: 15px 0; font-size: .88rem; font-weight: 700; }
+    input { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid #cbd5c0; border-radius: 8px; font: inherit; }
+    input[type="checkbox"] { width: 18px; min-height: 18px; }
+    .consent { display: flex; align-items: flex-start; gap: 10px; font-weight: 500; line-height: 1.5; }
+    button { min-height: 42px; padding: 9px 15px; border: 0; border-radius: 8px; background: #18324c; color: #fff; cursor: pointer; font: 700 .88rem Arial, sans-serif; }
+    button:disabled { cursor: wait; opacity: .6; }
+    .delete-button { min-height: 35px; padding: 7px 10px; background: #8d2932; font-size: .8rem; }
+    .status { min-height: 1.5em; color: #405b34; font-size: .88rem; }
+    .status[data-error="true"] { color: #a3212a; }
+    .auth-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .documents { display: grid; gap: 11px; padding: 0; list-style: none; }
+    .document { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px; border: 1px solid #e1e7dc; border-radius: 10px; }
+    .document strong { display: block; margin-bottom: 4px; }
+    .document small { display: block; color: #617083; line-height: 1.5; overflow-wrap: anywhere; }
+    .document a { color: #315d2e; }
+    .empty { color: #617083; font-size: .9rem; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; }
+    :focus-visible { outline: 3px solid #7da64e; outline-offset: 3px; }
+    @media (max-width: 560px) { .document { align-items: flex-start; flex-direction: column; } }
+  </style>
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+<body>
+  <header><a href="/admin/">← Volver a administración del sitio</a></header>
+  <main>
+    <h1>Documentos del asistente regulatorio</h1>
+    <p>Administra el corpus público utilizado por el asistente RAG. El sistema indexa documentos PDF para recuperar fragmentos relevantes al responder.</p>
+    <div class="notice">Carga únicamente documentos normativos o técnicos de acceso público y autorizados para su procesamiento. El PDF y sus fragmentos se almacenan en Supabase; el texto se envía a Google Gemini para generar embeddings y respuestas. No cargues documentos confidenciales ni datos personales. Los PDF escaneados sin texto seleccionable aún no tienen soporte OCR.</div>
+    <section class="card" aria-labelledby="access-heading">
+      <div class="auth-row">
+        <div>
+          <h2 id="access-heading">Acceso de administración</h2>
+          <p id="auth-status" class="status" role="status">Comprobando sesión...</p>
+        </div>
+        <button id="login-button" type="button" hidden>Iniciar sesión</button>
+        <button id="logout-button" type="button" hidden>Cerrar sesión</button>
+      </div>
+    </section>
+    <section class="card" aria-labelledby="upload-heading">
+      <h2 id="upload-heading">Cargar PDF público</h2>
+      <form id="upload-form">
+        <label for="document-title">Título del documento
+          <input id="document-title" name="title" type="text" maxlength="160" required placeholder="Ej.: Reglamento de Títulos Habilitantes">
+        </label>
+        <label for="document-file">Archivo PDF (máximo 5 MB)
+          <input id="document-file" name="file" type="file" accept="application/pdf,.pdf" required>
+        </label>
+        <label for="document-source">Enlace público de la fuente (opcional; HTTPS)
+          <input id="document-source" name="sourceUrl" type="url" maxlength="1500" placeholder="https://www.arcotel.gob.ec/...">
+        </label>
+        <label for="document-date">Fecha de publicación o versión (opcional)
+          <input id="document-date" name="publishedAt" type="date">
+        </label>
+        <label class="consent" for="public-document">
+          <input id="public-document" name="publicDocument" value="yes" type="checkbox" required>
+          <span>Confirmo que este documento es público y puedo autorizar su procesamiento mediante Google Gemini.</span>
+        </label>
+        <button id="upload-button" type="submit">Cargar e indexar</button>
+      </form>
+      <p id="upload-status" class="status" role="status" aria-live="polite"></p>
+    </section>
+    <section class="card" aria-labelledby="documents-heading">
+      <div class="auth-row">
+        <h2 id="documents-heading">Documentos indexados</h2>
+        <button id="refresh-button" type="button">Actualizar lista</button>
+      </div>
+      <p id="documents-status" class="status" role="status" aria-live="polite"></p>
+      <ul id="documents-list" class="documents"></ul>
+    </section>
+  </main>
+  <script>
+    const authStatus = document.getElementById("auth-status");
+    const loginButton = document.getElementById("login-button");
+    const logoutButton = document.getElementById("logout-button");
+    const uploadForm = document.getElementById("upload-form");
+    const uploadButton = document.getElementById("upload-button");
+    const uploadStatus = document.getElementById("upload-status");
+    const documentsStatus = document.getElementById("documents-status");
+    const documentsList = document.getElementById("documents-list");
+    let activeUser = null;
+
+    const setStatus = (element, text, isError = false) => {
+      element.textContent = text;
+      element.dataset.error = String(isError);
+    };
+
+    const getToken = async () => {
+      if (!activeUser) throw new Error("Inicia sesión con una cuenta autorizada.");
+      return activeUser.jwt();
+    };
+
+    const requestDocuments = async (options = {}) => {
+      const token = await getToken();
+      const response = await fetch("/.netlify/functions/rag-documents", {
+        ...options,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...(options.body ? { "Content-Type": "application/json" } : {})
+        }
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(payload?.error || "No se pudo completar la operación.");
+      return payload;
+    };
+
+    const renderDocuments = (documents) => {
+      documentsList.replaceChildren();
+      if (!documents.length) {
+        const empty = document.createElement("li");
+        empty.className = "empty";
+        empty.textContent = "Todavía no hay documentos indexados.";
+        documentsList.append(empty);
+        return;
+      }
+      for (const documentInfo of documents) {
+        const item = document.createElement("li");
+        item.className = "document";
+        const details = document.createElement("div");
+        const title = document.createElement("strong");
+        title.textContent = documentInfo.title;
+        const metadata = document.createElement("small");
+        metadata.textContent = `${documentInfo.filename} · Versión: ${documentInfo.published_at || "sin fecha"} · Cargado: ${new Date(documentInfo.created_at).toLocaleDateString("es-EC")}`;
+        details.append(title, metadata);
+        if (documentInfo.source_url) {
+          const link = document.createElement("a");
+          link.href = documentInfo.source_url;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent = "Abrir fuente ↗";
+          details.append(link);
+        }
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "delete-button";
+        deleteButton.type = "button";
+        deleteButton.textContent = "Eliminar";
+        deleteButton.setAttribute("aria-label", `Eliminar ${documentInfo.title}`);
+        deleteButton.addEventListener("click", async () => {
+          if (!window.confirm(`¿Eliminar "${documentInfo.title}" del índice del asistente?`)) return;
+          deleteButton.disabled = true;
+          setStatus(documentsStatus, "Eliminando documento...");
+          try {
+            await requestDocuments({
+              method: "DELETE",
+              body: JSON.stringify({ id: documentInfo.id })
+            });
+            setStatus(documentsStatus, "Documento eliminado del índice.");
+            await loadDocuments();
+          } catch (error) {
+            deleteButton.disabled = false;
+            setStatus(documentsStatus, error.message, true);
+          }
+        });
+        item.append(details, deleteButton);
+        documentsList.append(item);
+      }
+    };
+
+    const loadDocuments = async () => {
+      if (!activeUser) return;
+      setStatus(documentsStatus, "Cargando documentos...");
+      try {
+        const result = await requestDocuments();
+        renderDocuments(result.documents);
+        setStatus(documentsStatus, `${result.documents.length} documento(s) indexado(s).`);
+      } catch (error) {
+        setStatus(documentsStatus, error.message, true);
+      }
+    };
+
+    const updateAuth = (user) => {
+      activeUser = user;
+      loginButton.hidden = Boolean(user);
+      logoutButton.hidden = !user;
+      uploadButton.disabled = !user;
+      document.getElementById("refresh-button").disabled = !user;
+      if (user) {
+        setStatus(authStatus, `Sesión iniciada: ${user.email}. La función verificará la lista de administradores autorizados.`);
+        loadDocuments();
+      } else {
+        setStatus(authStatus, "Inicia sesión con la cuenta autorizada por el administrador.");
+        renderDocuments([]);
+        setStatus(documentsStatus, "Se requiere iniciar sesión.");
+      }
+    };
+
+    if (window.netlifyIdentity) {
+      window.netlifyIdentity.on("init", updateAuth);
+      window.netlifyIdentity.on("login", (user) => {
+        updateAuth(user);
+        window.netlifyIdentity.close();
+      });
+      window.netlifyIdentity.on("logout", () => updateAuth(null));
+      loginButton.addEventListener("click", () => window.netlifyIdentity.open("login"));
+      logoutButton.addEventListener("click", () => window.netlifyIdentity.logout());
+    } else {
+      setStatus(authStatus, "No se pudo cargar Netlify Identity. Comprueba la configuración del sitio.", true);
+    }
+
+    document.getElementById("refresh-button").addEventListener("click", loadDocuments);
+    uploadForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!activeUser) {
+        setStatus(uploadStatus, "Inicia sesión antes de cargar documentos.", true);
+        return;
+      }
+      uploadButton.disabled = true;
+      setStatus(uploadStatus, "Extrayendo e indexando el PDF. Puede tardar un momento...");
+      try {
+        const token = await getToken();
+        const response = await fetch("/.netlify/functions/rag-upload", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: new FormData(uploadForm)
+        });
+        const result = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(result?.error || "No se pudo indexar el documento.");
+        setStatus(uploadStatus, `Documento indexado: ${result.title} (${result.chunks} fragmentos).`);
+        uploadForm.reset();
+        await loadDocuments();
+      } catch (error) {
+        setStatus(uploadStatus, error.message, true);
+      } finally {
+        uploadButton.disabled = !activeUser;
+      }
+    });
+  </script>
+</body>
+</html>
