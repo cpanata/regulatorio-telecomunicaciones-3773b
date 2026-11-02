@@ -84,6 +84,10 @@ test("chat searches documents and returns cited sources", async () => {
         ]);
       }
       if (url.includes(":batchEmbedContents")) {
+        const requestBody = JSON.parse(init.body);
+        assert.equal(requestBody.requests[0].taskType, "RETRIEVAL_QUERY");
+        assert.equal(requestBody.requests[0].outputDimensionality, 768);
+        assert.equal("config" in requestBody.requests[0], false);
         return Response.json({ embeddings: [{ values: Array(768).fill(0.01) }] });
       }
       if (url.includes(":generateContent")) {
@@ -130,7 +134,11 @@ test("authorized admin uploads and indexes a public PDF", async () => {
         return Response.json({ email: "owner@example.com" });
       }
       if (url.includes(":batchEmbedContents")) {
-        const count = JSON.parse(init.body).requests.length;
+        const requests = JSON.parse(init.body).requests;
+        assert.equal(requests[0].taskType, "RETRIEVAL_DOCUMENT");
+        assert.equal(requests[0].outputDimensionality, 768);
+        assert.equal("config" in requests[0], false);
+        const count = requests.length;
         return Response.json({ embeddings: Array.from({ length: count }, () => ({ values: Array(768).fill(0.02) })) });
       }
       if (url.includes("/storage/v1/object/rag-documents/")) {

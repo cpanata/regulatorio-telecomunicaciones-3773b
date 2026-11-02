@@ -196,10 +196,8 @@ export const makeEmbeddings = async (env, texts, taskType) => {
     requests: texts.map((text) => ({
       model: `models/${env.embeddingModel}`,
       content: { parts: [{ text }] },
-      config: {
-        taskType,
-        outputDimensionality: EMBEDDING_DIMENSIONS
-      }
+      taskType,
+      outputDimensionality: EMBEDDING_DIMENSIONS
     }))
   });
   const embeddings = result?.embeddings?.map((item) => item.values);
